@@ -30,16 +30,7 @@ async def touch():
 
 async def watch(loop, path):
     watcher = aionotify.Watcher()
-    watcher.watch(
-        path,
-        (
-            aionotify.Flags.MODIFY |
-            aionotify.Flags.CREATE |
-            aionotify.Flags.DELETE |
-            aionotify.Flags.ATTRIB |
-            aionotify.Flags.CLOSE_WRITE
-
-        ))
+    watcher.watch(path, aionotify.Flags.DELETE | aionotify.Flags.CLOSE_WRITE)
     await watcher.setup(loop)
     while True:
         event = await watcher.get_event()
