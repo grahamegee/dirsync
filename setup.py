@@ -8,7 +8,8 @@ setup(
     author_email='grahamegee@gmail.com',
     url='https://github.com/grahamegee/dirsync',
     install_requires=[
-        'asyncio'
+        'asyncio',
+        'aionotify'
     ],
     extras_require={}
 )
