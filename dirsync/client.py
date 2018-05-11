@@ -6,7 +6,11 @@ import os
 from .common import (
     FILE_PATH_LEN,
     FILE_LEN,
-    COMMAND_LEN)
+    COMMAND_LEN,
+    FILE_ADD,
+    FILE_DEL,
+    RESPONSE_CODES
+)
 
 
 logging.basicConfig(level='DEBUG')
@@ -53,25 +57,26 @@ async def watch(loop, path):
 
 
 async def send_delete_file(loop, filepath):
+    LOG.info(f'DELETE {filepath}')
     reader, writer = await asyncio.open_connection(
         '127.0.0.1', 8888, loop=loop)
+
     filepath = filepath.encode()
     filepath_len = len(filepath).to_bytes(FILE_PATH_LEN, 'big')
-    command = (2).to_bytes(COMMAND_LEN, 'big')
-    LOG.info(f'DELETE {filepath}')
     LOG.debug(f'Filepath length: {filepath_len}')
 
-    writer.write(command + filepath_len + filepath)
+    writer.write(FILE_DEL + filepath_len + filepath)
     writer.drain()
 
-    data = await reader.read(100)
-    LOG.info('Received: %r' % data.decode())
+    data = await reader.readexactly(1)
+    LOG.info('Received: %r' % RESPONSE_CODES[data])
 
     LOG.debug('Close the socket')
     writer.close()
 
 
 async def send_file(loop, filepath):
+    LOG.info(f'ADD {filepath}')
     reader, writer = await asyncio.open_connection(
         '127.0.0.1', 8888, loop=loop)
     try:
@@ -83,16 +88,15 @@ async def send_file(loop, filepath):
     filepath = filepath.encode()
     filepath_len = len(filepath).to_bytes(FILE_PATH_LEN, 'big')
     file_len = len(file_bytes).to_bytes(FILE_LEN, 'big')
-    command = (1).to_bytes(COMMAND_LEN, 'big')
     LOG.debug(f'Filepath length: {filepath_len}')
     LOG.info(f'SEND {filepath}')
     LOG.debug(f'File length: {file_len}')
 
-    writer.write(command + filepath_len + filepath + file_len + file_bytes)
+    writer.write(FILE_ADD + filepath_len + filepath + file_len + file_bytes)
     writer.drain()
 
-    data = await reader.read(100)
-    LOG.info('Received: %r' % data.decode())
+    data = await reader.readexactly(1)
+    LOG.info('Received: %r' % RESPONSE_CODES[data])
 
     LOG.debug('Close the socket')
     writer.close()

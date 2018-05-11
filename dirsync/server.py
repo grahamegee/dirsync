@@ -6,7 +6,9 @@ from .common import (
     FILE_PATH_LEN,
     FILE_LEN,
     COMMAND_LEN,
-    COMMANDS
+    FILE_ADD,
+    FILE_DEL,
+    OK
 )
 
 
@@ -14,12 +16,11 @@ logging.basicConfig(level='DEBUG')
 LOG = logging.getLogger('dirsync-server')
 
 async def handle_client_connection(reader, writer):
-    data = await reader.readexactly(COMMAND_LEN)
-    command = COMMANDS[(int).from_bytes(data, 'big')]
+    command = await reader.readexactly(COMMAND_LEN)
     LOG.info('Command {}'.format(command))
-    if command == 'FILE_ADD':
+    if command == FILE_ADD:
         await handle_file_add(reader, writer)
-    elif command == 'FILE_DEL':
+    elif command == FILE_DEL:
         await handle_file_del(reader, writer)
 
 
@@ -39,7 +40,7 @@ async def handle_file_add(reader, writer):
     data = await reader.readexactly(file_len)
 
     write_file(filepath, data)
-    writer.write(b'1')
+    writer.write(OK)
 
     LOG.debug("Close the client socket")
     writer.close()
@@ -53,7 +54,7 @@ async def handle_file_del(reader, writer):
     LOG.info(filepath)
 
     delete_file(filepath)
-    writer.write(b'1')
+    writer.write(OK)
 
     LOG.debug("Close the client socket")
     writer.close()
