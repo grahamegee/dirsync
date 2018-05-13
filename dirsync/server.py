@@ -1,14 +1,17 @@
 import asyncio
 import logging
 import os
+import hashlib
 
 from .common import (
     FILE_PATH_LEN,
     FILE_LEN,
     COMMAND_LEN,
+    CHECKSUM_LEN,
     FILE_ADD,
     FILE_DEL,
-    OK
+    OK,
+    GOT
 )
 
 
@@ -33,6 +36,29 @@ async def handle_file_add(reader, writer):
     filepath = data.decode()
     LOG.info(f'ADD File {filepath}')
 
+    checksum = await reader.readexactly(CHECKSUM_LEN)
+
+    try:
+        with open(filepath, 'rb') as f:
+            fbytes = f.read()
+        local_checksum = hashlib.md5(fbytes).hexdigest()
+    except FileNotFoundError:
+        LOG.debug(f'New file {filepath}')
+        writer.write(OK)
+        await copy_file(reader, writer, filepath)
+    else:
+        LOG.info(checksum.decode() + ' ' + local_checksum)
+        if checksum.decode() == local_checksum:
+            LOG.info(f'File {filepath} up to date')
+            writer.write(GOT)
+        else:
+            writer.write(OK)
+            await copy_file(reader, writer, filepath)
+
+    LOG.debug("Close the client socket")
+    writer.close()
+
+async def copy_file(reader, writer, filepath):
     data = await reader.readexactly(FILE_LEN)
     file_len = (int).from_bytes(data, 'big')
     LOG.info(f'File length {file_len}')
@@ -42,8 +68,6 @@ async def handle_file_add(reader, writer):
     write_file(filepath, data)
     writer.write(OK)
 
-    LOG.debug("Close the client socket")
-    writer.close()
 
 async def handle_file_del(reader, writer):
     data = await reader.readexactly(FILE_PATH_LEN)

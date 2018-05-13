@@ -2,6 +2,7 @@ import asyncio
 import logging
 import aionotify
 import os
+import hashlib
 
 from .common import (
     FILE_PATH_LEN,
@@ -9,6 +10,8 @@ from .common import (
     COMMAND_LEN,
     FILE_ADD,
     FILE_DEL,
+    OK,
+    GOT,
     RESPONSE_CODES
 )
 
@@ -59,8 +62,8 @@ async def send_delete_file(loop, filepath):
     writer.write(FILE_DEL + filepath_len + filepath)
     writer.drain()
 
-    data = await reader.readexactly(1)
-    LOG.info('Received: %r' % RESPONSE_CODES[data])
+    response = await reader.readexactly(1)
+    LOG.info('Received: %r' % RESPONSE_CODES[response])
 
     LOG.debug('Close the socket')
     writer.close()
@@ -79,15 +82,23 @@ async def send_file(loop, filepath):
     filepath = filepath.encode()
     filepath_len = len(filepath).to_bytes(FILE_PATH_LEN, 'big')
     file_len = len(file_bytes).to_bytes(FILE_LEN, 'big')
+    checksum = hashlib.md5(file_bytes).hexdigest().encode()
     LOG.debug(f'Filepath length: {filepath_len}')
     LOG.info(f'SEND {filepath}')
     LOG.debug(f'File length: {file_len}')
 
-    writer.write(FILE_ADD + filepath_len + filepath + file_len + file_bytes)
+    writer.write(FILE_ADD + filepath_len + filepath + checksum)
     writer.drain()
+    response = await reader.readexactly(1)
+    if response == GOT:
+        LOG.info(f'File {filepath} already up to date')
+    elif response == OK:
+        LOG.info(f'Sending file data for {filepath}')
+        writer.write(file_len + file_bytes)
+        writer.drain()
 
-    data = await reader.readexactly(1)
-    LOG.info('Received: %r' % RESPONSE_CODES[data])
+        data = await reader.readexactly(1)
+        LOG.info('Received: %r' % RESPONSE_CODES[data])
 
     LOG.debug('Close the socket')
     writer.close()
