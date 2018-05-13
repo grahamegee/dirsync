@@ -91,7 +91,12 @@ def write_file(filepath, data):
 
 
 def delete_file(filepath):
-    os.remove(f'./{filepath}')
+    try:
+        os.remove(f'./{filepath}')
+    except FileNotFoundError:
+        # FIXME: client sometimes communicates deletion of temporary files
+        # that haven't been sent over.
+        pass
 
 
 loop = asyncio.get_event_loop()
