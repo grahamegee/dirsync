@@ -11,7 +11,8 @@ from .common import (
     FILE_ADD,
     FILE_DEL,
     OK,
-    GOT
+    GOT,
+    COMMANDS
 )
 
 
@@ -20,7 +21,7 @@ LOG = logging.getLogger('dirsync-server')
 
 async def handle_client_connection(reader, writer):
     command = await reader.readexactly(COMMAND_LEN)
-    LOG.info('Command {}'.format(command))
+    LOG.info('Command {}'.format(COMMANDS[command]))
     if command == FILE_ADD:
         await handle_file_add(reader, writer)
     elif command == FILE_DEL:

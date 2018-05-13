@@ -7,6 +7,10 @@ FILE_ADD = OK = b'\x01'
 FILE_DEL = ERROR = b'\x02'
 GOT = b'\x03'
 
+COMMANDS = {
+    b'\x01': 'FILE_ADD',
+    b'\x02': 'FILE_DEL'
+}
 RESPONSE_CODES = {
     b'\x01': 'OK',
     b'\x02': 'ERROR',
