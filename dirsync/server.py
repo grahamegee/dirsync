@@ -102,7 +102,7 @@ def delete_file(filepath):
 
 loop = asyncio.get_event_loop()
 coro = asyncio.start_server(
-    handle_client_connection, '127.0.0.1', 8888, loop=loop)
+    handle_client_connection, '0.0.0.0', 8888, loop=loop)
 server = loop.run_until_complete(coro)
 LOG.info('Serving on {}'.format(server.sockets[0].getsockname()))
 
