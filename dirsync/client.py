@@ -3,6 +3,7 @@ import logging
 import aionotify
 import os
 import hashlib
+import argparse
 
 from .common import (
     FILE_PATH_LEN,
@@ -31,7 +32,7 @@ async def touch():
                 open(entry.name, 'a').close()
 
 
-async def watch(loop, path):
+async def watch(loop, path, server_ip):
     watcher = aionotify.Watcher()
     watcher.watch(path, aionotify.Flags.DELETE | aionotify.Flags.CLOSE_WRITE)
     await watcher.setup(loop)
@@ -45,15 +46,15 @@ async def watch(loop, path):
         # to loop.create_event(watch(loop, path + event.name + '/') will
         # work.
         if flags == [aionotify.Flags.CLOSE_WRITE]:
-            await send_file(loop, path + event.name)
+            await send_file(loop, path + event.name, server_ip)
         elif flags == [aionotify.Flags.DELETE]:
-            await send_delete_file(loop, path + event.name)
+            await send_delete_file(loop, path + event.name, server_ip)
 
 
-async def send_delete_file(loop, filepath):
+async def send_delete_file(loop, filepath, server_ip):
     LOG.info(f'DELETE {filepath}')
     reader, writer = await asyncio.open_connection(
-        '127.0.0.1', 8888, loop=loop)
+        server_ip, 8888, loop=loop)
 
     filepath = filepath.encode()
     filepath_len = len(filepath).to_bytes(FILE_PATH_LEN, 'big')
@@ -69,10 +70,11 @@ async def send_delete_file(loop, filepath):
     writer.close()
 
 
-async def send_file(loop, filepath):
+async def send_file(loop, filepath, server_ip):
+    print('XXXX', server_ip)
     LOG.info(f'ADD {filepath}')
     reader, writer = await asyncio.open_connection(
-        '127.0.0.1', 8888, loop=loop)
+        server_ip, 8888, loop=loop)
     try:
         with open(filepath, 'rb') as f:
             file_bytes = f.read()
@@ -103,9 +105,11 @@ async def send_file(loop, filepath):
     LOG.debug('Close the socket')
     writer.close()
 
-
+parser = argparse.ArgumentParser('Directory sync client')
+parser.add_argument('--server-ip', default='127.0.0.1', dest='server_ip')
+args = parser.parse_args()
 loop = asyncio.get_event_loop()
-loop.create_task(watch(loop, './'))
+loop.create_task(watch(loop, './', args.server_ip))
 loop.create_task(touch())
 try:
     loop.run_forever()

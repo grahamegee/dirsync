@@ -9,7 +9,8 @@ setup(
     url='https://github.com/grahamegee/dirsync',
     install_requires=[
         'asyncio',
-        'aionotify'
+        'aionotify',
+        'argparse'
     ],
     extras_require={}
 )
