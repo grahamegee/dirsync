@@ -71,7 +71,6 @@ async def send_delete_file(loop, filepath, server_ip):
 
 
 async def send_file(loop, filepath, server_ip):
-    print('XXXX', server_ip)
     LOG.info(f'ADD {filepath}')
     reader, writer = await asyncio.open_connection(
         server_ip, 8888, loop=loop)
