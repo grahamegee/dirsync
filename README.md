@@ -39,7 +39,7 @@ python -m dirsync.server
 
 ### Client 
 
-Navigate to the directory that you want to keep up to date and start the server.
+Navigate to the directory that you want to keep up to date and start the client.
 ```bash
 cd <path to dir>
 python -m dirsync.client
