@@ -45,3 +45,21 @@ cd <path to dir>
 python -m dirsync.client
 ```
 
+You can optionally set the server-ip with `--server-ip`.
+
+## TODO
+
+* Make the directory configurable on the server and client (command-line arg).
+  This will involve getting rid of the handy `asyncio.start_server`
+  convenience function unfortunately.
+* Handle file deletions that happen when the client is down.
+  This requires extending the protocol to allow the client and server to
+  communicate their respective file trees.
+* Handle sub-directories.
+  * client: look for `[CREATE, IS_DIR]` flags and recursively call `watch`.
+  * server: implement mkdir
+* Handle large files and optimise data transfer.
+  These go hand in hand:
+  * Open large file in smaller chunks.
+  * Negotiate checksums on the chunks rather than full files.
+
